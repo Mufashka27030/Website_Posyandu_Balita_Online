@@ -8,125 +8,94 @@ use App\Models\PengukuranModel;
 class Dashboard extends BaseController
 {
     public function index()
-{
-    $balitaModel = new BalitaModel();
-    $pengukuranModel = new PengukuranModel();
-
-    $role = strtolower((string) session()->get('role'));
-
-    if ($role === 'orangtua') {
-
-        $balita = $balitaModel
-            ->where('id_user', session()->get('id'))
-            ->findAll();
-
-    } else {
-
-        $balita = $balitaModel->findAll();
-
-    }
-
-    $totalBalita = count($balita);
-    $normal = 0;
-    $stunting = 0;
-    $berat = 0;
-
-    foreach($balita as $b){
-
-        $ukur = $pengukuranModel
-            ->where('id_balita',$b['id_balita'])
-            ->orderBy('tanggal_ukur','DESC')
-            ->first();
-
-        if(!$ukur){
-            continue;
-        }
-
-        switch($ukur['status_gizi']){
-
-            case 'Normal':
-                $normal++;
-            break;
-
-            case 'Stunting':
-                $stunting++;
-            break;
-
-            case 'Stunting Berat':
-                $berat++;
-            break;
-
-        }
-
-    }
-
-    return view('dashboard/index',[
-
-        'total_balita'=>$totalBalita,
-
-        'total_normal'=>$normal,
-
-        'total_stunting'=>$stunting,
-
-        'stunting_berat'=>$berat
-
-    ]);
-
+    {
+        return view('dashboard/index', $this->getStatistik());
     }
 
     public function statistik()
     {
+        $statistik = $this->getStatistik();
+
+        $persentase = $statistik['total_balita'] > 0
+            ? (($statistik['total_stunting'] + $statistik['stunting_berat']) / $statistik['total_balita']) * 100
+            : 0;
+
+        return view('dashboard/statistik', array_merge($statistik, [
+            'persentase' => round($persentase, 2),
+            'warning'     => $statistik['stunting_berat'],
+        ]));
+    }
+
+    /**
+     * Ambil statistik gizi balita dengan query optimal (tanpa N+1).
+     * Mengganti N query pengukuran dengan 1 query tunggal + filtering di PHP.
+     */
+    private function getStatistik(): array
+    {
         $balitaModel = new BalitaModel();
         $pengukuranModel = new PengukuranModel();
 
+        // Single query: ambil balita sesuai role
         $role = strtolower((string) session()->get('role'));
 
-        // Scope orangtua: hanya balita milik user login
         if ($role === 'orangtua') {
-            $idUser = (int) session()->get('id');
             $balita = $balitaModel
-                ->where('id_user', $idUser)
+                ->where('id_user', (int) session()->get('id'))
                 ->findAll();
         } else {
             $balita = $balitaModel->findAll();
         }
 
         $totalBalita = count($balita);
-        $totalNormal = 0;
-        $totalStunting = 0;
-        $stuntingBerat = 0;
 
-        foreach ($balita as $row) {
-            $pengukuran = $pengukuranModel
-                ->where('id_balita', $row['id_balita'])
-                ->orderBy('tanggal_ukur', 'DESC')
-                ->first();
+        if ($totalBalita === 0) {
+            return [
+                'total_balita'  => 0,
+                'total_normal'  => 0,
+                'total_stunting' => 0,
+                'stunting_berat' => 0,
+            ];
+        }
 
-            if (! $pengukuran) {
-                continue;
-            }
+        // N+1 FIX: ambil SEMUA pengukuran dalam SATU query (whereIn),
+        // lalu ambil yang terbaru per balita di PHP
+        $balitaIds = array_column($balita, 'id_balita');
 
-            if ($pengukuran['status_gizi'] === 'Normal') {
-                $totalNormal++;
-            } elseif ($pengukuran['status_gizi'] === 'Stunting') {
-                $totalStunting++;
-            } elseif ($pengukuran['status_gizi'] === 'Stunting Berat') {
-                $stuntingBerat++;
+        $allPengukuran = $pengukuranModel
+            ->select('id_balita, status_gizi')
+            ->whereIn('id_balita', $balitaIds)
+            ->orderBy('id_balita', 'ASC')
+            ->orderBy('tanggal_ukur', 'DESC')
+            ->findAll();
+
+        // Baris pertama per id_balita = pengukuran terbaru
+        $latestStatus = [];
+        foreach ($allPengukuran as $row) {
+            $idBalita = $row['id_balita'];
+            if (! isset($latestStatus[$idBalita])) {
+                $latestStatus[$idBalita] = $row['status_gizi'];
             }
         }
 
-        $persentase = $totalBalita > 0
-            ? (($totalStunting + $stuntingBerat) / $totalBalita) * 100
-            : 0;
+        // Hitung jumlah per status
+        $normal   = 0;
+        $stunting = 0;
+        $berat    = 0;
 
-        return view('dashboard/statistik', [
-            'total_balita' => $totalBalita,
-            'total_stunting' => $totalStunting,
-            'stunting_berat' => $stuntingBerat,
-            'total_normal' => $totalNormal,
-            'persentase' => round($persentase, 2),
-            'warning' => $stuntingBerat,
-        ]);
+        foreach ($latestStatus as $status) {
+            match ($status) {
+                'Normal'         => $normal++,
+                'Stunting'       => $stunting++,
+                'Stunting Berat' => $berat++,
+                default          => null,
+            };
+        }
+
+        return [
+            'total_balita'  => $totalBalita,
+            'total_normal'  => $normal,
+            'total_stunting' => $stunting,
+            'stunting_berat' => $berat,
+        ];
     }
-
 }
