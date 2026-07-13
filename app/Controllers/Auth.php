@@ -311,6 +311,9 @@ class Auth extends BaseController
 
     private function loginThrottleKey(): string
     {
-        return 'login:' . $this->request->getIPAddress();
+        $ip = $this->request->getIPAddress();
+        // Hapus semua reserved character yang ditolak cache handler: {}()/\@:
+        $ip = preg_replace('/[^a-zA-Z0-9_\-\.]/', '_', $ip);
+        return 'login_' . $ip;
     }
 }
