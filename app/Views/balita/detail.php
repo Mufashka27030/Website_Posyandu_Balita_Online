@@ -7,9 +7,6 @@
         <h3 class="mb-1">Detail Data Balita</h3>
         <p class="text-muted mb-0">Informasi lengkap data balita</p>
     </div>
-    <a href__="/balita" class="btn btn-outline-secondary btn-sm">
-        ← Kembali
-    </a>
 </div>
 
 <?php if (isset($balita) && $balita): ?>

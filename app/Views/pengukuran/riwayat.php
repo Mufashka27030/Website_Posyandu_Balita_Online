@@ -1,12 +1,14 @@
 <?= $this->include('layout/header'); ?>
-<?= $this->include('layout/navbar'); ?>
 
+<?= $this->extend('layout/main'); ?>
+
+<?= $this->section('content'); ?>
 
 <div class="main-content">
 
 <div class="card shadow">
 
-<div class="card-header bg-success text-white">
+<div class="card-header bg-primary text-white">
 
 <h4 class="mb-0">
 
@@ -132,4 +134,4 @@ Belum ada data pengukuran
 
 </div>
 
-<?= $this->include('layout/footer'); ?>
+<?= $this->endSection(); ?>

@@ -1,3 +1,8 @@
+<?= $this->extend('layout/main'); ?>
+
+<?= $this->section('content'); ?>
+
+
 <?php
 
 /** @var array $orangtua */
@@ -280,14 +285,6 @@
 
                 </button>
 
-                <a
-                    href="/balita"
-                    class="btn btn-secondary">
-
-                    Kembali
-
-                </a>
-
             </div>
 
         </form>
@@ -297,3 +294,5 @@
 </body>
 
 </html>
+
+<?= $this->endSection(); ?>

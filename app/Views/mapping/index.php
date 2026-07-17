@@ -1,3 +1,7 @@
+<?= $this->extend('layout/main'); ?>
+
+<?= $this->section('content'); ?>
+
 <!DOCTYPE html>
 <html>
 
@@ -110,13 +114,6 @@ body{
 <div class="container">
 
 <div class="card">
-
-<div>
-<a href="/dashboard" class="btn btn-secondary mb-3">
-    <i class="fas fa-arrow-left"></i>
-    Kembali
-</a>
-</div>
 
 <h2>
 
@@ -264,3 +261,5 @@ item.alamat+'<br><br>'+
 </body>
 
 </html>
+
+<?= $this->endSection(); ?>

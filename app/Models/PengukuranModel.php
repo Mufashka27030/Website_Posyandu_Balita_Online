@@ -18,6 +18,8 @@ class PengukuranModel extends Model
         'tinggi_badan',
         'z_score',
         'status_gizi',
-        'warna_kms'
+        'warna_kms',
+        'catatan',
+        'foto_kms',
     ];
 }

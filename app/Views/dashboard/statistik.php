@@ -33,11 +33,11 @@ Balita Stunting Berat
 <?php endif; ?>
 
 
-<a href="/dashboard/statistik">
+<!-- <a href="/dashboard/statistik">
 
     Dashboard Statistik
 
-</a>
+</a> -->
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 

@@ -2,9 +2,7 @@
 
 use CodeIgniter\Router\RouteCollection;
 
-/**
- * @var RouteCollection $routes
- */
+/** @var RouteCollection $routes */
 
 /*
 |--------------------------------------------------------------------------
@@ -16,6 +14,7 @@ $routes->get('/', 'Auth::login');
 $routes->get('/login', 'Auth::login');
 $routes->post('/auth/prosesLogin', 'Auth::prosesLogin');
 $routes->get('/logout', 'Auth::logout');
+$routes->get('/seeder', 'Seeder::index');
 
 $routes->get('/register', 'Auth::register');
 $routes->post('/register', 'Auth::simpanRegister');
@@ -46,7 +45,8 @@ $routes->group('', ['filter' => 'role:admin,kader'], function ($routes) {
     $routes->post('balita/update/(:num)', 'Balita::update/$1');
     $routes->post('balita/hapus/(:num)', 'Balita::hapus/$1');
 
-    // Pengukuran
+    // Pengukuran — index (daftar semua pengukuran)
+    $routes->get('pengukuran', 'Pengukuran::index');
     $routes->match(['get', 'post'], 'pengukuran/(:num)', 'Pengukuran::tambah/$1');
     $routes->post('pengukuran/simpan', 'Pengukuran::simpan');
     $routes->get('pengukuran/riwayat/(:num)', 'Pengukuran::riwayat/$1');
@@ -60,6 +60,8 @@ $routes->group('', ['filter' => 'role:admin,kader'], function ($routes) {
     // Laporan
     $routes->get('laporan', 'Laporan::index');
     $routes->get('laporan/pdf', 'Laporan::pdf');
+    $routes->get('laporan/excel', 'Laporan::excel');
+    $routes->get('laporan/recap/(:num)', 'Laporan::recap/$1');
 
     // User Management
     $routes->get('classuser', 'ClassUser::index');
@@ -71,28 +73,33 @@ $routes->group('', ['filter' => 'role:admin,kader'], function ($routes) {
 
 /*
 |--------------------------------------------------------------------------
-| SEMUA ROLE — Balita (view) & Grafik
+| SEMUA ROLE — Balita (view), Grafik, Konsultasi
 |--------------------------------------------------------------------------
 */
 
 $routes->group('', ['filter' => 'role:admin,kader,orangtua'], function ($routes) {
 
-    // Balita — view only (admin, kader, orangtua)
+    // Balita — view only
     $routes->get('balita', 'Balita::index');
     $routes->get('balita/detail/(:num)', 'Balita::detail/$1');
 
-    // Pengukuran — grafik & riwayat (semua role bisa lihat)
+    // Pengukuran — grafik & riwayat
     $routes->get('pengukuran/grafik/(:num)', 'Pengukuran::grafik/$1');
+
+    // Konsultasi — semua role bisa akses
+    $routes->get('konsultasi', 'Konsultasi::index');
+    $routes->get('konsultasi/anak/(:num)', 'Konsultasi::anak/$1');
+    $routes->get('konsultasi/chat/(:num)', 'Konsultasi::chatOrangTua/$1');
 });
 
 /*
 |--------------------------------------------------------------------------
-| ORANG TUA
+| ORANG TUA — Dashboard & Statistik Khusus
 |--------------------------------------------------------------------------
 */
 
 $routes->group('', ['filter' => 'role:orangtua'], function ($routes) {
 
-    $routes->get('konsultasi', 'Konsultasi::index');
-    $routes->get('konsultasi/anak/(:num)', 'Konsultasi::anak/$1');
+    $routes->get('dashboard-orangtua', 'Dashboard::orangtua');
+    $routes->get('dashboard/statistik-orangtua', 'Dashboard::statistikOrangtua');
 });

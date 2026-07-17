@@ -114,4 +114,54 @@ class Laporan extends BaseController
             'persentase' => round($persentase, 2),
         ];
     }
+
+    public function recap($tahun)
+    {
+    $bulan = (int) $this->request->getGet('bulan');
+    $bulan = ($bulan >= 1 && $bulan <= 12) ? $bulan : (int) date('m');
+
+    $namaBulan = [1=>'Januari','Februari','Maret','April','Mei','Juni',
+                   'Juli','Agustus','September','Oktober','November','Desember'];
+
+    $pengukuranModel = new PengukuranModel();
+    $balitaModel     = new BalitaModel();
+
+    // Ambil pengukuran di bulan/tahun tersebut
+    $pengukuranList = $pengukuranModel
+        ->where('MONTH(tanggal_ukur)', $bulan)
+        ->where('YEAR(tanggal_ukur)', (int) $tahun)
+        ->findAll();
+
+    $totalBalita  = count($pengukuranList);
+    $totalNormal  = 0;
+    $totalStunting = 0;
+    $stuntingBerat = 0;
+
+    foreach ($pengukuranList as $p) {
+        $status = $p['status_gizi'] ?? '';
+        if ($status === 'Normal') {
+            $totalNormal++;
+        } elseif ($status === 'Stunting') {
+            $totalStunting++;
+        } elseif ($status === 'Stunting Berat') {
+            $stuntingBerat++;
+        }
+    }
+
+    $persentase = $totalBalita > 0
+        ? round((($totalStunting + $stuntingBerat) / $totalBalita) * 100, 2)
+        : 0;
+
+    return $this->response->setJSON([
+        'status'          => 'success',
+        'bulan'           => $bulan,
+        'bulan_nama'      => $namaBulan[$bulan],
+        'tahun'           => (int) $tahun,
+        'total_balita'    => $totalBalita,
+        'total_normal'    => $totalNormal,
+        'total_stunting'  => $totalStunting,
+        'stunting_berat'  => $stuntingBerat,
+        'persentase'      => $persentase,
+    ]);
+    }
 }

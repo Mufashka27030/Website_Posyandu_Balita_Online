@@ -180,59 +180,90 @@ class Auth extends BaseController
 
     public function editProfile()
     {
-        if (! session()->get('logged_in')) {
-            return redirect()->to('/login');
+    if (! session()->get('logged_in')) {
+        return redirect()->to('/login');
         }
 
-        return view('auth/editprofile', [
-            'nama'  => session()->get('nama'),
-            'email' => session()->get('email'),
-            'role'  => session()->get('role'),
+    $model = new ClassUserModel();
+    $id    = (int) session()->get('id');
+    $user  = $model->find($id);
+
+    return view('auth/editprofile', [
+        'nama'  => $user['nama'] ?? session()->get('nama'),
+        'email' => $user['email'] ?? session()->get('email'),
+        'no_hp' => $user['no_hp'] ?? '',
+        'foto'  => $user['foto'] ?? '',
+        'role'  => session()->get('role'),
         ]);
     }
 
     public function updateProfile()
     {
-        if (! session()->get('logged_in')) {
-            return redirect()->to('/login');
-        }
+    if (! session()->get('logged_in')) {
+        return redirect()->to('/login');
+    }
 
-        if (! $this->validate([
-            'nama'  => 'required|min_length[3]|max_length[100]',
-            'email' => 'required|valid_email',
-        ])) {
-            return redirect()
-                ->back()
-                ->withInput()
-                ->with('error', $this->validator->listErrors());
-        }
-
-        $model    = new ClassUserModel();
-        $id       = (int) session()->get('id');
-        $email    = trim((string) $this->request->getPost('email'));
-        $existing = $model->where('email', $email)->first();
-
-        if ($existing && (int) $existing['id_user'] !== $id) {
-            return redirect()
-                ->back()
-                ->withInput()
-                ->with('error', 'Email sudah digunakan user lain');
-        }
-
-        $nama = trim((string) $this->request->getPost('nama'));
-        $model->update($id, [
-            'nama'  => $nama,
-            'email' => $email,
-        ]);
-
-        session()->set([
-            'nama'  => $nama,
-            'email' => $email,
-        ]);
-
+    if (! $this->validate([
+        'nama'  => 'required|min_length[3]|max_length[100]',
+        'email' => 'required|valid_email',
+        'foto'  => 'permit_empty|is_image[foto]|max_size[foto,2048]',
+    ])) {
         return redirect()
-            ->to('/profil')
-            ->with('success', 'Profil berhasil diperbarui');
+            ->back()
+            ->withInput()
+            ->with('error', $this->validator->listErrors());
+    }
+
+    $model    = new ClassUserModel();
+    $id       = (int) session()->get('id');
+    $email    = trim((string) $this->request->getPost('email'));
+    $existing = $model->where('email', $email)->first();
+
+    if ($existing && (int) $existing['id_user'] !== $id) {
+        return redirect()
+            ->back()
+            ->withInput()
+            ->with('error', 'Email sudah digunakan user lain');
+    }
+
+    $nama  = trim((string) $this->request->getPost('nama'));
+    $no_hp = trim((string) $this->request->getPost('no_hp'));
+
+    $data = [
+        'nama'  => $nama,
+        'email' => $email,
+        'no_hp' => $no_hp,
+    ];
+
+    // Handle upload foto
+    $foto = $this->request->getFile('foto');
+    if ($foto && $foto->isValid() && ! $foto->hasMoved()) {
+        // Buat folder jika belum ada
+        $uploadPath = ROOTPATH . 'public/uploads/foto';
+        if (! is_dir($uploadPath)) {
+            mkdir($uploadPath, 0777, true);
+        }
+
+        $fotoName = $foto->getRandomName();
+        $foto->move($uploadPath, $fotoName);
+        $data['foto'] = 'uploads/foto/' . $fotoName;
+    }
+
+    $model->update($id, $data);
+
+    // Update session
+    session()->set([
+        'nama'  => $nama,
+        'email' => $email,
+    ]);
+
+    if (isset($data['foto'])) {
+        session()->set('foto', $data['foto']);
+    }
+
+    return redirect()
+        ->to('/profil')
+        ->with('success', 'Profil berhasil diperbarui');
     }
 
     // ==================== PASSWORD ====================
@@ -292,11 +323,14 @@ class Auth extends BaseController
 
     private function redirectAfterLogin()
     {
-        if (in_array(session()->get('role'), ['admin', 'kader'], true)) {
-            return redirect()->to('/dashboard');
-        }
+    $role = session()->get('role');
 
-        return redirect()->to('/profil');
+    if (in_array($role, ['admin', 'kader'], true)) {
+        return redirect()->to('/dashboard');
+    }
+
+    // Orang tua → dashboard khusus
+    return redirect()->to('/dashboard-orangtua');
     }
 
     private function getRole(): string
