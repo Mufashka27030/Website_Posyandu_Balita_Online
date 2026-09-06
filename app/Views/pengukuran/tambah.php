@@ -1,240 +1,171 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
+<?= $this->extend('layout/main'); ?>
 
-<meta charset="UTF-8">
+<?= $this->section('content'); ?>
 
-<meta
-name="viewport"
-content="width=device-width, initial-scale=1">
+<div class="row justify-content-center mt-4">
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom">
+                <h4 class="mb-0 fw-bold">
+                    <i class="bi bi-clipboard2-pulse text-primary me-2"></i>Input Pengukuran Balita
+                </h4>
+            </div>
+            <div class="card-body">
 
-<title>Input Pengukuran</title>
+                <?php if (session()->getFlashdata('error')): ?>
+                    <div class="alert alert-danger"><?= session()->getFlashdata('error'); ?></div>
+                <?php endif; ?>
 
-<style>
+                <?php if (isset($balita)): ?>
+                <form action="/pengukuran/simpan" method="post" id="formPengukuran">
+                    <?= csrf_field(); ?>
 
-body{
-    background:#f5f7fb;
-    font-family:Arial,sans-serif;
-    padding:20px;
-}
+                    <input type="hidden" name="id_balita" value="<?= esc(old('id_balita', $balita['id_balita']), 'attr'); ?>">
 
-.card{
-    max-width:700px;
-    margin:auto;
-    background:white;
-    padding:25px;
-    border-radius:20px;
-    box-shadow:0 2px 10px rgba(0,0,0,.1);
-}
+                    <!-- Info Balita (read-only) -->
+                    <div class="mb-3">
+                        <label class="form-label">Nama Balita</label>
+                        <input type="text" class="form-control bg-light" value="<?= esc($balita['nama_balita'], 'attr'); ?>" readonly>
+                    </div>
 
-h2{
-    margin-bottom:20px;
-}
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Jenis Kelamin</label>
+                                <input type="text" class="form-control bg-light" value="<?= $balita['jenis_kelamin'] === 'L' ? 'Laki-laki' : 'Perempuan'; ?>" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Tanggal Lahir</label>
+                                <input type="date" class="form-control bg-light"
+                                       value="<?= esc(old('tanggal_lahir', $balita['tanggal_lahir']), 'attr'); ?>"
+                                       readonly>
+                            </div>
+                        </div>
+                    </div>
 
-.form-group{
-    margin-bottom:15px;
-}
+                    <div class="mb-3">
+                        <label class="form-label">Tanggal Pengukuran <span class="text-danger">*</span></label>
+                        <input type="date" name="tanggal_ukur" id="tanggal_ukur"
+                               class="form-control"
+                               value="<?= esc(old('tanggal_ukur', date('Y-m-d')), 'attr'); ?>"
+                               data-tgl-lahir="<?= esc($balita['tanggal_lahir'], 'attr'); ?>"
+                               required>
+                    </div>
 
-label{
-    display:block;
-    margin-bottom:5px;
-    font-weight:bold;
-}
+                    <!-- USIA -->
+                    <div class="mb-3">
+                        <label class="form-label">Usia Balita (Bulan) <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <input type="number" name="usia_bulan" id="usia_bulan"
+                                   class="form-control"
+                                   value="<?= esc(old('usia_bulan', '0'), 'attr'); ?>"
+                                   min="0" max="60" required>
+                            <span class="input-group-text">Bulan</span>
+                        </div>
+                        <small class="text-muted">
+                            <i class="bi bi-info-circle"></i> Usia otomatis dihitung dari tanggal lahir & tanggal ukur.
+                        </small>
+                    </div>
 
-input{
-    width:100%;
-    padding:12px;
-    border:1px solid #ddd;
-    border-radius:10px;
-    box-sizing:border-box;
-}
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Berat Badan (Kg) <span class="text-danger">*</span></label>
+                                <input type="number" step="0.01" name="berat_badan" id="bb"
+                                       class="form-control"
+                                       value="<?= esc(old('berat_badan'), 'attr'); ?>"
+                                       required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Tinggi Badan (Cm) <span class="text-danger">*</span></label>
+                                <input type="number" step="0.01" name="tinggi_badan" id="tb"
+                                       class="form-control"
+                                       value="<?= esc(old('tinggi_badan'), 'attr'); ?>"
+                                       required>
+                            </div>
+                        </div>
+                    </div>
 
-.preview{
-    margin-top:20px;
-    padding:15px;
-    background:#eef2ff;
-    border-radius:10px;
-}
+                    <!-- Preview -->
+                    <div class="alert alert-light border">
+                        <h6 class="fw-bold mb-2"><i class="bi bi-eye"></i> Preview Pengukuran</h6>
+                        <div class="row g-2 small">
+                            <div class="col-4">
+                                <span class="text-muted">Usia:</span>
+                                <strong id="previewUsia">-</strong> bln
+                            </div>
+                            <div class="col-4">
+                                <span class="text-muted">BB:</span>
+                                <strong id="previewBB">-</strong> kg
+                            </div>
+                            <div class="col-4">
+                                <span class="text-muted">TB:</span>
+                                <strong id="previewTB">-</strong> cm
+                            </div>
+                        </div>
+                    </div>
 
-.alert{
-    background:#fee2e2;
-    color:#991b1b;
-    padding:12px;
-    border-radius:10px;
-    margin-bottom:15px;
-}
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save"></i> Simpan Pengukuran
+                        </button>
+                        <a href="/balita/detail/<?= $balita['id_balita']; ?>" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Kembali
+                        </a>
+                    </div>
+                </form>
 
-.btn{
-    width:100%;
-    background:#2563eb;
-    color:white;
-    border:none;
-    padding:14px;
-    border-radius:10px;
-    cursor:pointer;
-    font-size:16px;
-    margin-top:15px;
-}
+                <?php else: ?>
+                    <div class="alert alert-danger">Data balita tidak ditemukan.</div>
+                <?php endif; ?>
 
-.nama-balita{
-    background:#f3f4f6;
-}
-
-.back-link{
-    display:block;
-    margin-top:15px;
-    text-align:center;
-    text-decoration:none;
-    color:#555;
-}
-
-</style>
-
-</head>
-
-<body>
-
-<div class="card">
-
-<h2>Input Pengukuran Balita</h2>
-
-<?php if(isset($balita)): ?>
-
-<form
-action="/pengukuran/simpan"
-method="post">
-
-<?= csrf_field(); ?>
-
-<?php if(session()->getFlashdata('error')): ?>
-
-<div class="alert">
-
-<?= session()->getFlashdata('error'); ?>
-
-</div>
-
-<?php endif; ?>
-
-<input
-type="hidden"
-name="id_balita"
-value="<?= esc(old('id_balita', $balita['id_balita']), 'attr'); ?>">
-
-<div class="form-group">
-
-<label>Nama Balita</label>
-
-<input
-class="nama-balita"
-type="text"
-value="<?= esc($balita['nama_balita'], 'attr'); ?>"
-readonly>
-
-</div>
-
-<div class="form-group">
-
-<label>Tanggal Pengukuran</label>
-
-<input
-type="date"
-name="tanggal_ukur"
-value="<?= esc(old('tanggal_ukur'), 'attr'); ?>"
-required>
-
-</div>
-
-<div class="form-group">
-
-<label>Berat Badan (Kg)</label>
-
-<input
-id="bb"
-type="number"
-step="0.01"
-name="berat_badan"
-value="<?= esc(old('berat_badan'), 'attr'); ?>"
-required>
-
-</div>
-
-<div class="form-group">
-
-<label>Tinggi Badan (Cm)</label>
-
-<input
-id="tb"
-type="number"
-step="0.01"
-name="tinggi_badan"
-value="<?= esc(old('tinggi_badan'), 'attr'); ?>"
-required>
-
-</div>
-
-<div class="preview">
-
-<h4>Preview Pengukuran</h4>
-
-<p>
-Berat:
-<span id="previewBB"><?= esc(old('berat_badan', '-')); ?></span>
-Kg
-</p>
-
-<p>
-Tinggi:
-<span id="previewTB"><?= esc(old('tinggi_badan', '-')); ?></span>
-Cm
-</p>
-
-</div>
-
-<a
-href="/balita/detail/<?= esc($balita['id_balita'], 'url'); ?>"
-class="back-link">
-Kembali ke Detail Balita
-</a>
-
-<button
-type="submit"
-class="btn">
-Simpan Pengukuran
-</button>
-
-</form>
-
-<?php else: ?>
-
-<div class="alert">Data balita tidak ditemukan.</div>
-
-<a
-href="/balita"
-class="back-link">
-Kembali ke Data Balita
-</a>
-
-<?php endif; ?>
-
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
-const bb = document.getElementById('bb');
-const tb = document.getElementById('tb');
+(function() {
+    const tglUkur   = document.getElementById('tanggal_ukur');
+    const usiaInput = document.getElementById('usia_bulan');
+    const bbInput   = document.getElementById('bb');
+    const tbInput   = document.getElementById('tb');
+    const pUsia     = document.getElementById('previewUsia');
+    const pBB       = document.getElementById('previewBB');
+    const pTB       = document.getElementById('previewTB');
 
-if (bb) {
-    bb.addEventListener('input', function() {
-        document.getElementById('previewBB').innerText = this.value || '-';
-    });
-}
+    function hitungUsia() {
+        if (!tglUkur || !usiaInput) return;
+        const tglLahir = tglUkur.getAttribute('data-tgl-lahir');
+        if (!tglLahir || !tglUkur.value) return;
 
-if (tb) {
-    tb.addEventListener('input', function() {
-        document.getElementById('previewTB').innerText = this.value || '-';
-    });
-}
+        const lahir = new Date(tglLahir);
+        const ukur  = new Date(tglUkur.value);
+
+        if (ukur < lahir) {
+            usiaInput.value = 0;
+            pUsia.textContent = '0';
+            return;
+        }
+
+        let bulan = (ukur.getFullYear() - lahir.getFullYear()) * 12;
+        bulan += ukur.getMonth() - lahir.getMonth();
+        if (ukur.getDate() < lahir.getDate()) bulan--;
+
+        usiaInput.value = bulan;
+        pUsia.textContent = bulan;
+    }
+
+    if (tglUkur) tglUkur.addEventListener('change', hitungUsia);
+    if (bbInput) bbInput.addEventListener('input', function() { pBB.textContent = this.value || '-'; });
+    if (tbInput) tbInput.addEventListener('input', function() { pTB.textContent = this.value || '-'; });
+
+    hitungUsia();
+})();
 </script>
 
-</body>
-</html>
+<?= $this->endSection(); ?>

@@ -9,6 +9,11 @@ class Dashboard extends BaseController
 {
     public function index()
     {
+        // Cek login dulu — belum login → redirect ke halaman login
+        if (! session()->get('id')) {
+            return redirect()->to('/login');
+        }
+
         $role = strtolower((string) session()->get('role'));
 
         // Orang tua → redirect ke dashboard khusus
@@ -24,6 +29,10 @@ class Dashboard extends BaseController
      */
     public function orangtua()
     {
+        if (! session()->get('id')) {
+            return redirect()->to('/login');
+        }
+
         $statistik   = $this->getStatistik();
         $balitaList  = $this->getBalitaWithLatestPengukuran();
 
@@ -59,8 +68,9 @@ class Dashboard extends BaseController
             : 0;
 
         return view('dashboard/statistik', array_merge($statistik, [
-            'persentase' => round($persentase, 2),
-            'warning'    => $statistik['stunting_berat'],
+            'persentase'     => round($persentase, 2),
+            'warning'        => $statistik['stunting_berat'],
+            'persen_belum'   => $statistik['persen_belum'],
         ]));
     }
 
@@ -86,10 +96,12 @@ class Dashboard extends BaseController
 
         if ($totalBalita === 0) {
             return [
-                'total_balita'  => 0,
-                'total_normal'  => 0,
+                'total_balita'   => 0,
+                'total_normal'   => 0,
                 'total_stunting' => 0,
                 'stunting_berat' => 0,
+                'belum_diukur'   => 0,
+                'persen_belum'   => 0,
             ];
         }
 
@@ -123,11 +135,17 @@ class Dashboard extends BaseController
             };
         }
 
+        // Issue #4: Hitung balita yang BELUM PERNAH diukur
+        $belumDiukur = $totalBalita - count($latestStatus);
+        $persenBelum = $totalBalita > 0 ? round(($belumDiukur / $totalBalita) * 100, 1) : 0;
+
         return [
-            'total_balita'  => $totalBalita,
-            'total_normal'  => $normal,
+            'total_balita'   => $totalBalita,
+            'total_normal'   => $normal,
             'total_stunting' => $stunting,
             'stunting_berat' => $berat,
+            'belum_diukur'   => $belumDiukur,
+            'persen_belum'   => $persenBelum,
         ];
     }
 

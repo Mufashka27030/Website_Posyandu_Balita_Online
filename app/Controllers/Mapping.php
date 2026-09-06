@@ -23,7 +23,6 @@ class Mapping extends BaseController
             ]);
         }
 
-        // N+1 FIX: ambil SEMUA pengukuran dalam SATU query
         $balitaIds = array_column($allBalita, 'id_balita');
 
         $allPengukuran = $pengukuranModel
@@ -33,7 +32,6 @@ class Mapping extends BaseController
             ->orderBy('tanggal_ukur', 'DESC')
             ->findAll();
 
-        // Status gizi terbaru per balita (baris pertama = terbaru)
         $latestStatus = [];
         foreach ($allPengukuran as $row) {
             $idBalita = $row['id_balita'];
@@ -42,7 +40,6 @@ class Mapping extends BaseController
             }
         }
 
-        // Bangun data peta + hitung statistik dalam satu loop
         $dataBalita = [];
         $normal     = 0;
         $stunting   = 0;
@@ -56,7 +53,12 @@ class Mapping extends BaseController
                 continue;
             }
 
-            $status = $latestStatus[$balita['id_balita']] ?? 'Belum Ada Data';
+            $status = $latestStatus[$balita['id_balita']] ?? null;
+
+            // SKIP: balita yang belum pernah diukur TIDAK muncul di peta
+            if ($status === null) {
+                continue;
+            }
 
             match ($status) {
                 'Normal'         => $normal++,

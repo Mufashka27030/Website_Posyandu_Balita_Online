@@ -19,7 +19,7 @@ class ClassUser extends BaseController
                 ->groupEnd();
         }
 
-        return view('user/index', [
+        return view('classuser/index', [
             'users'   => $model->orderBy('nama', 'ASC')->findAll(),
             'keyword' => $keyword,
         ]);
@@ -27,7 +27,49 @@ class ClassUser extends BaseController
 
     public function tambah()
     {
-        return redirect()->to('/register');
+        return view('classuser/tambah');
+    }
+
+    public function simpan()
+    {
+        $allowedRoles = strtolower((string) session()->get('role')) === 'admin'
+            ? ['admin', 'kader', 'orangtua']
+            : ['orangtua'];
+
+        if (! $this->validate([
+            'nama'     => 'required|min_length[3]|max_length[100]',
+            'email'    => 'required|valid_email|is_unique[class_users.email]',
+            'password' => 'required|min_length[6]',
+            'role'     => 'required|in_list[' . implode(',', $allowedRoles) . ']',
+            'no_hp'    => 'permit_empty|max_length[20]',
+            'alamat'   => 'permit_empty',
+            'foto'     => 'permit_empty|is_image[foto]|max_size[foto,2048]',
+        ])) {
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', $this->validator->listErrors());
+        }
+
+        $model = new ClassUserModel();
+
+        $data = [
+            'nama'     => trim((string) $this->request->getPost('nama')),
+            'email'    => trim((string) $this->request->getPost('email')),
+            'password' => password_hash((string) $this->request->getPost('password'), PASSWORD_DEFAULT),
+            'role'     => strtolower((string) $this->request->getPost('role')),
+            'no_hp'    => trim((string) $this->request->getPost('no_hp')),
+            'alamat'   => trim((string) $this->request->getPost('alamat')),
+        ];
+
+        // Handle upload foto
+        $data['foto'] = $this->uploadFoto();
+
+        $model->insert($data);
+
+        return redirect()
+            ->to('/classuser')
+            ->with('success', 'User baru berhasil ditambahkan');
     }
 
     public function edit($id)
@@ -41,7 +83,16 @@ class ClassUser extends BaseController
                 ->with('error', 'User tidak ditemukan');
         }
 
-        return view('user/edit', ['user' => $user]);
+        if (
+            strtolower((string) session()->get('role')) !== 'admin'
+            && strtolower((string) $user['role']) === 'admin'
+        ) {
+            return redirect()
+                ->to('/classuser')
+                ->with('error', 'Kader tidak memiliki hak untuk mengubah akun admin');
+        }
+
+        return view('classuser/edit', ['user' => $user]);
     }
 
     public function update($id)
@@ -56,11 +107,11 @@ class ClassUser extends BaseController
                 ->with('error', 'User tidak ditemukan');
         }
 
-        $newRole = strtolower((string) $this->request->getPost('role'));
-        $isSelf  = $id === (int) session()->get('id');
-        $wasAdmin = strtolower((string) $user['role']) === 'admin';
+        $actorRole = strtolower((string) session()->get('role'));
+        $newRole   = strtolower((string) $this->request->getPost('role'));
+        $isSelf    = $id === (int) session()->get('id');
+        $wasAdmin  = strtolower((string) $user['role']) === 'admin';
 
-        // Hardening: admin tidak boleh menurunkan role dirinya sendiri
         if ($isSelf && $wasAdmin && $newRole !== 'admin') {
             return redirect()
                 ->back()
@@ -68,11 +119,24 @@ class ClassUser extends BaseController
                 ->with('error', 'Anda tidak dapat menurunkan role akun Anda sendiri');
         }
 
+        if ($actorRole !== 'admin' && $wasAdmin) {
+            return redirect()
+                ->to('/classuser')
+                ->with('error', 'Kader tidak memiliki hak untuk mengubah akun admin');
+        }
+
+        $allowedRoles = $actorRole === 'admin'
+            ? ['admin', 'kader', 'orangtua']
+            : array_unique(['orangtua', strtolower((string) $user['role'])]);
+
         if (! $this->validate([
             'nama'     => 'required|min_length[3]|max_length[100]',
             'email'    => 'required|valid_email',
-            'role'     => 'required|in_list[admin,kader,orangtua]',
+            'role'     => 'required|in_list[' . implode(',', $allowedRoles) . ']',
             'password' => 'permit_empty|min_length[6]',
+            'no_hp'    => 'permit_empty|max_length[20]',
+            'alamat'   => 'permit_empty',
+            'foto'     => 'permit_empty|is_image[foto]|max_size[foto,2048]',
         ])) {
             return redirect()
                 ->back()
@@ -91,10 +155,11 @@ class ClassUser extends BaseController
         }
 
         $data = [
-            'nama'  => trim((string) $this->request->getPost('nama')),
-            'email' => $email,
-            'role'  => $newRole,
-            'no_hp' => $this->request->getPost('no_hp'),
+            'nama'   => trim((string) $this->request->getPost('nama')),
+            'email'  => $email,
+            'role'   => $newRole,
+            'no_hp'  => trim((string) $this->request->getPost('no_hp')),
+            'alamat' => trim((string) $this->request->getPost('alamat')),
         ];
 
         $password = (string) $this->request->getPost('password');
@@ -102,9 +167,17 @@ class ClassUser extends BaseController
             $data['password'] = password_hash($password, PASSWORD_DEFAULT);
         }
 
+        // Handle upload foto — hapus foto lama jika ada foto baru
+        $fotoBaru = $this->uploadFoto();
+        if ($fotoBaru !== null) {
+            $data['foto'] = $fotoBaru;
+            if (! empty($user['foto']) && file_exists(FCPATH . $user['foto'])) {
+                @unlink(FCPATH . $user['foto']);
+            }
+        }
+
         $model->update($id, $data);
 
-        // Sync session jika update diri sendiri
         if ($isSelf) {
             session()->set([
                 'nama'  => $data['nama'],
@@ -122,7 +195,6 @@ class ClassUser extends BaseController
     {
         $id = (int) $id;
 
-        // Tidak bisa hapus akun sendiri
         if ($id === (int) session()->get('id')) {
             return redirect()
                 ->to('/classuser')
@@ -138,7 +210,19 @@ class ClassUser extends BaseController
                 ->with('error', 'User tidak ditemukan');
         }
 
-        // Hardening: cegah hapus admin terakhir
+        // Kader tidak boleh menghapus akun admin — konsisten dengan edit()
+        // dan update() yang sudah lebih dulu melarang kader menyentuh akun
+        // admin. Sebelumnya pengecekan ini tidak ada di sini, jadi kader
+        // masih bisa menghapus admin lain selama bukan admin terakhir.
+        if (
+            strtolower((string) session()->get('role')) !== 'admin'
+            && strtolower((string) $user['role']) === 'admin'
+        ) {
+            return redirect()
+                ->to('/classuser')
+                ->with('error', 'Kader tidak memiliki hak untuk menghapus akun admin');
+        }
+
         if (strtolower((string) $user['role']) === 'admin') {
             $adminCount = $model->where('role', 'admin')->countAllResults();
 
@@ -149,10 +233,47 @@ class ClassUser extends BaseController
             }
         }
 
+        // Hapus file foto jika ada
+        if (! empty($user['foto']) && file_exists(FCPATH . $user['foto'])) {
+            @unlink(FCPATH . $user['foto']);
+        }
+
         $model->delete($id);
 
         return redirect()
             ->to('/classuser')
             ->with('success', 'User berhasil dihapus');
+    }
+
+    /**
+     * Upload foto profil. Return path relatif atau null jika tidak ada upload.
+     */
+    private function uploadFoto(): ?string
+    {
+        $foto = $this->request->getFile('foto');
+
+        if (! $foto || ! $foto->isValid() || $foto->hasMoved()) {
+            return null;
+        }
+
+        // Validasi: max 2MB, hanya jpg/png
+        if ($foto->getSize() > 2097152) {
+            return null;
+        }
+
+        $ext = strtolower($foto->getExtension());
+        if (! in_array($ext, ['jpg', 'jpeg', 'png'], true)) {
+            return null;
+        }
+
+        $uploadPath = FCPATH . 'uploads/foto_user/';
+        if (! is_dir($uploadPath)) {
+            mkdir($uploadPath, 0755, true);
+        }
+
+        $namaFile = $foto->getRandomName();
+        $foto->move($uploadPath, $namaFile);
+
+        return 'uploads/foto_user/' . $namaFile;
     }
 }

@@ -7,6 +7,9 @@
         <h3 class="mb-1">Detail Data Balita</h3>
         <p class="text-muted mb-0">Informasi lengkap data balita</p>
     </div>
+    <a href="/balita" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left"></i> Kembali ke Data Balita
+    </a>
 </div>
 
 <?php if (isset($balita) && $balita): ?>
@@ -25,6 +28,10 @@
                         <span class="fw-semibold"><?= esc($balita['nama_balita']); ?></span>
                     </div>
                     <div class="col-md-6">
+                        <small class="text-muted d-block text-uppercase fw-semibold mb-1" style="font-size: 0.7rem;">NIK</small>
+                        <span class="fw-semibold"><?= esc($balita['nik'] ?? '-'); ?></span>
+                    </div>
+                    <div class="col-md-6">
                         <small class="text-muted d-block text-uppercase fw-semibold mb-1" style="font-size: 0.7rem;">Nama Ibu</small>
                         <span class="fw-semibold"><?= esc($balita['nama_ibu']); ?></span>
                     </div>
@@ -40,6 +47,10 @@
                             <?= date('d M Y', strtotime($balita['tanggal_lahir'])); ?>
                         </span>
                     </div>
+                    <div class="col-md-6">
+                        <small class="text-muted d-block text-uppercase fw-semibold mb-1" style="font-size: 0.7rem;">Puskesmas</small>
+                        <span class="fw-semibold"><?= esc($puskesmas['nama_puskesmas'] ?? '-'); ?></span>
+                    </div>
                     <div class="col-12">
                         <small class="text-muted d-block text-uppercase fw-semibold mb-1" style="font-size: 0.7rem;">Alamat</small>
                         <span><?= esc($balita['alamat'] ?? '-'); ?></span>
@@ -52,7 +63,7 @@
         <div class="card shadow-sm border-0 mt-3">
             <div class="card-body py-3">
                 <div class="d-flex gap-2 flex-wrap">
-                    <a href__="/balita/edit/<?= $balita['id_balita']; ?>" class="btn btn-warning btn-sm">✏ Edit Data</a>
+                    <a href="/balita/edit/<?= $balita['id_balita']; ?>" class="btn btn-warning btn-sm">✏ Edit Data</a>
                     <form action="/balita/hapus/<?= $balita['id_balita']; ?>" method="post" class="d-inline"
                           onsubmit="return confirm('Yakin hapus data balita ini?');">
                         <input type="hidden" name="<?= csrf_token(); ?>" value="<?= csrf_hash(); ?>">
@@ -125,13 +136,21 @@
             </div>
         </div>
 
-        <!-- Action Buttons -->
+         <!-- Action Buttons -->
         <div class="card shadow-sm border-0 mt-3">
             <div class="card-body py-3">
                 <div class="d-grid gap-2">
-                    <a href__="/pengukuran/<?= $balita['id_balita']; ?>" class="btn btn-primary btn-sm">➕ Tambah Pengukuran</a>
-                    <a href__="/pengukuran/riwayat/<?= $balita['id_balita']; ?>" class="btn btn-outline-primary btn-sm">📋 Riwayat Pengukuran</a>
-                    <a href__="/pengukuran/grafik/<?= $balita['id_balita']; ?>" class="btn btn-outline-info btn-sm">📈 Grafik Pertumbuhan</a>
+                    <?php if (session()->get('role') !== 'orangtua'): ?>
+                    <a href="/pengukuran/<?= $balita['id_balita']; ?>" class="btn btn-primary btn-sm">
+                        <i class="bi bi-plus-circle"></i> Tambah Pengukuran
+                    </a>
+                    <?php endif; ?>
+                    <a href="/pengukuran/riwayat/<?= $balita['id_balita']; ?>" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-list-ul"></i> Riwayat Pengukuran
+                    </a>
+                    <a href="/pengukuran/grafik/<?= $balita['id_balita']; ?>" class="btn btn-outline-info btn-sm">
+                        <i class="bi bi-graph-up"></i> Grafik Pertumbuhan
+                    </a>
                 </div>
             </div>
         </div>

@@ -7,7 +7,7 @@
         <h3 class="mb-1 fw-bold">📈 Grafik Pertumbuhan Balita</h3>
         <p class="text-muted mb-0"><?= esc($balita['nama_balita'] ?? 'Data Tidak Ada'); ?> — Monitoring Pertumbuhan</p>
     </div>
-    <a href__="/balita/detail/<?= $balita['id_balita'] ?? ''; ?>" class="btn btn-outline-secondary btn-sm">← Kembali</a>
+    <a href="<?= esc($back_url ?? '/balita/detail/' . ($balita['id_balita'] ?? ''), 'attr'); ?>" class="btn btn-outline-secondary btn-sm">← Kembali</a>
 </div>
 
 <?php if (isset($alert) && $alert !== ''): ?>

@@ -109,6 +109,10 @@ class Auth extends BaseController
 
     public function simpanRegister()
     {
+        // Dulu method ini bisa diakses siapa saja tanpa login, dan field
+        // 'role' diambil mentah dari POST — celah privilege escalation
+        // (orang luar bisa kirim role=admin dan langsung jadi admin).
+        // Sekarang disamakan dengan pengecekan di register() (GET).
         if (! session()->get('logged_in')) {
             return redirect()->to('/login');
         }
@@ -119,24 +123,19 @@ class Auth extends BaseController
                 ->with('error', 'Anda tidak memiliki hak akses');
         }
 
-        $currentRole  = $this->getRole();
-        $role         = strtolower((string) $this->request->getPost('role'));
-        $allowedRoles = $currentRole === 'admin'
+        // Kader hanya boleh mendaftarkan akun orangtua; admin boleh ketiganya.
+        // Ini dicek di server, bukan cuma disembunyikan lewat dropdown di view.
+        $allowedRoles = $this->getRole() === 'admin'
             ? ['admin', 'kader', 'orangtua']
             : ['orangtua'];
 
-        if (! in_array($role, $allowedRoles, true)) {
-            return redirect()
-                ->back()
-                ->withInput()
-                ->with('error', 'Role yang dipilih tidak diizinkan');
-        }
-
         if (! $this->validate([
-            'nama_lengkap' => 'required|min_length[3]|max_length[100]',
-            'email'        => 'required|valid_email|is_unique[class_users.email]',
-            'password'     => 'required|min_length[6]',
-            'role'         => 'required|in_list[admin,kader,orangtua]',
+            'nama'     => 'required|min_length[3]|max_length[100]',
+            'email'    => 'required|valid_email|is_unique[class_users.email]',
+            'password' => 'required|min_length[6]',
+            'role'     => 'required|in_list[' . implode(',', $allowedRoles) . ']',
+            'no_hp'    => 'permit_empty|max_length[20]',
+            'alamat'   => 'permit_empty',
         ])) {
             return redirect()
                 ->back()
@@ -145,17 +144,19 @@ class Auth extends BaseController
         }
 
         $model = new ClassUserModel();
-        $model->save([
-            'nama'     => trim((string) $this->request->getPost('nama_lengkap')),
+
+        $model->insert([
+            'nama'     => trim((string) $this->request->getPost('nama')),
             'email'    => trim((string) $this->request->getPost('email')),
             'password' => password_hash((string) $this->request->getPost('password'), PASSWORD_DEFAULT),
-            'role'     => $role,
-            'no_hp'    => $this->request->getPost('no_hp'),
+            'role'     => strtolower((string) $this->request->getPost('role')),
+            'no_hp'    => trim((string) $this->request->getPost('no_hp')),
+            'alamat'   => trim((string) $this->request->getPost('alamat')),
         ]);
 
         return redirect()
-            ->to('/classuser')
-            ->with('success', 'User berhasil ditambahkan');
+            ->to('/login')
+            ->with('success', 'Registrasi berhasil');
     }
 
     // ==================== PROFILE ====================

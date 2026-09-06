@@ -1,6 +1,5 @@
-<?= $this->include('layout/header'); ?>
-<?= $this->include('layout/navbar'); ?>
-<?= $this->include('layout/sidebar'); ?>
+<?= $this->extend('layout/main'); ?>
+<?= $this->section('content'); ?>
 
 <div class="main-content">
 
@@ -20,11 +19,23 @@ Edit Data Balita
 
 <?php if(isset($balita)): ?>
 
-<form
+<!-- <form
 action="/balita/update/<?= $balita['id_balita']; ?>"
-method="post">
+method="post"> -->
 
 <?= csrf_field(); ?>
+
+<form action="/balita/update/<?= $balita['id_balita']; ?>" method="post">
+    <?= csrf_field(); ?>
+
+    <!-- FIX FK: kirim id_user yang sudah ada (tidak boleh berubah saat edit) -->
+    <input type="hidden" name="id_user" value="<?= esc(old('id_user', $balita['id_user']), 'attr'); ?>">
+
+    <?php if(session()->getFlashdata('error')): ?>
+    <div class="alert alert-danger"><?= session()->getFlashdata('error'); ?></div>
+    <?php endif; ?>
+
+    <!-- ... field lainnya ... -->
 
 <?php if(session()->getFlashdata('error')): ?>
 
@@ -47,6 +58,12 @@ class="form-control"
 value="<?= esc(old('nama_balita', $balita['nama_balita']), 'attr'); ?>"
 required>
 
+</div>
+
+<div class="form-group">
+    <label>NIK Balita</label>
+    <input type="text" name="nik" maxlength="20"
+           value="<?= esc(old('nik', $balita['nik'] ?? ''), 'attr'); ?>">
 </div>
 
 <div class="mb-3">
@@ -97,6 +114,31 @@ type="date"
 name="tanggal_lahir"
 class="form-control"
 value="<?= esc(old('tanggal_lahir', $balita['tanggal_lahir']), 'attr'); ?>">
+
+</div>
+
+<div class="mb-3">
+
+<label>Puskesmas</label>
+
+<select
+name="id_puskesmas"
+class="form-control">
+
+<option value="">-- Belum ditentukan --</option>
+<?php foreach (($puskesmas ?? []) as $p): ?>
+<option
+value="<?= (int) $p['id_puskesmas']; ?>"
+<?= (string) old('id_puskesmas', (string) ($balita['id_puskesmas'] ?? '')) === (string) $p['id_puskesmas'] ? 'selected' : ''; ?>>
+<?= esc($p['nama_puskesmas']); ?>
+</option>
+<?php endforeach; ?>
+
+</select>
+
+<?php if (empty($puskesmas)): ?>
+<small class="text-muted">Belum ada data puskesmas. <a href="/puskesmas/tambah">Tambahkan dulu di sini.</a></small>
+<?php endif; ?>
 
 </div>
 
@@ -159,4 +201,4 @@ Kembali
 
 </div>
 
-<?= $this->include('layout/footer'); ?>
+<?= $this->endSection(); ?>

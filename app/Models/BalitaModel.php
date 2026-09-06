@@ -13,7 +13,7 @@ class BalitaModel extends Model
     protected $updatedField   = 'updated_at';
 
     protected $allowedFields = [
-        'id_posyandu',
+        'id_puskesmas',
         'id_user',
         'nama_balita',
         'nama_ibu',

@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Models\BalitaModel;
 use App\Models\PengukuranModel;
 use App\Models\ClassUserModel;
+use App\Models\PuskesmasModel;
 
 class Balita extends BaseController
 {
@@ -37,7 +38,10 @@ class Balita extends BaseController
             ->where('role', 'orangtua')
             ->findAll();
 
-        return view('balita/tambah', ['orangtua' => $orangtua]);
+        $puskesmasModel = new PuskesmasModel();
+        $puskesmas      = $puskesmasModel->orderBy('nama_puskesmas', 'ASC')->findAll();
+
+        return view('balita/tambah', ['orangtua' => $orangtua, 'puskesmas' => $puskesmas]);
     }
 
     public function simpan()
@@ -53,7 +57,6 @@ class Balita extends BaseController
                 ->with('error', $this->validator->listErrors());
         }
 
-        // Validasi: pastikan id_user adalah orangtua yang valid
         $idUser    = (int) $this->request->getPost('id_user');
         $userModel = new ClassUserModel();
         $orangtua  = $userModel
@@ -78,13 +81,17 @@ class Balita extends BaseController
 
     public function detail($id)
     {
-        // IDOR protection: orangtua hanya bisa akses balita miliknya
         $balita = $this->findBalitaOwned((int) $id);
 
         if (! $balita) {
             return redirect()
                 ->to('/balita')
                 ->with('error', 'Data balita tidak ditemukan');
+        }
+
+        $puskesmas = null;
+        if (! empty($balita['id_puskesmas'])) {
+            $puskesmas = (new PuskesmasModel())->find((int) $balita['id_puskesmas']);
         }
 
         $pengukuranModel = new PengukuranModel();
@@ -95,6 +102,7 @@ class Balita extends BaseController
 
         return view('balita/detail', [
             'balita'     => $balita,
+            'puskesmas'   => $puskesmas,
             'pengukuran' => $pengukuran,
         ]);
     }
@@ -114,7 +122,10 @@ class Balita extends BaseController
                 ->with('error', 'Data balita tidak ditemukan');
         }
 
-        return view('balita/edit', ['balita' => $balita]);
+        $puskesmasModel = new PuskesmasModel();
+        $puskesmas      = $puskesmasModel->orderBy('nama_puskesmas', 'ASC')->findAll();
+
+        return view('balita/edit', ['balita' => $balita, 'puskesmas' => $puskesmas]);
     }
 
     public function update($id)
@@ -138,6 +149,20 @@ class Balita extends BaseController
                 ->back()
                 ->withInput()
                 ->with('error', $this->validator->listErrors());
+        }
+
+        $idUser    = (int) $this->request->getPost('id_user');
+        $userModel = new ClassUserModel();
+        $orangtua  = $userModel
+            ->where('id_user', $idUser)
+            ->where('role', 'orangtua')
+            ->first();
+
+        if (! $orangtua) {
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', 'Orang tua tidak valid atau tidak ditemukan');
         }
 
         $model->update($id, $this->payload());
@@ -182,10 +207,6 @@ class Balita extends BaseController
         return $this->getRole() === 'orangtua';
     }
 
-    /**
-     * Cari balita dengan validasi kepemilikan (IDOR protection).
-     * Orang tua hanya bisa mengakses data balita miliknya.
-     */
     private function findBalitaOwned(int $id): ?array
     {
         $model = new BalitaModel();
@@ -204,12 +225,14 @@ class Balita extends BaseController
     {
         return [
             'nama_balita'   => 'required|min_length[2]|max_length[100]',
+            'nik'           => 'permit_empty|max_length[20]',
             'nama_ibu'      => 'required|min_length[2]|max_length[100]',
             'jenis_kelamin'  => 'required|in_list[L,P]',
             'tanggal_lahir'  => 'required|valid_date[Y-m-d]',
             'alamat'         => 'permit_empty|max_length[255]',
             'latitude'       => 'permit_empty|numeric',
             'longitude'      => 'permit_empty|numeric',
+            'id_puskesmas'   => 'permit_empty|integer',
         ];
     }
 
@@ -217,7 +240,9 @@ class Balita extends BaseController
     {
         return [
             'id_user'       => (int) $this->request->getPost('id_user'),
+            'id_puskesmas'  => $this->nullablePostInt('id_puskesmas'),
             'nama_balita'   => trim((string) $this->request->getPost('nama_balita')),
+            'nik'           => $this->nullablePost('nik'),
             'nama_ibu'      => trim((string) $this->request->getPost('nama_ibu')),
             'jenis_kelamin'  => (string) $this->request->getPost('jenis_kelamin'),
             'tanggal_lahir'  => (string) $this->request->getPost('tanggal_lahir'),
@@ -225,6 +250,12 @@ class Balita extends BaseController
             'latitude'       => $this->nullablePost('latitude'),
             'longitude'      => $this->nullablePost('longitude'),
         ];
+    }
+
+    private function nullablePostInt(string $field): ?int
+    {
+        $value = trim((string) $this->request->getPost($field));
+        return $value === '' ? null : (int) $value;
     }
 
     private function nullablePost(string $field): ?string

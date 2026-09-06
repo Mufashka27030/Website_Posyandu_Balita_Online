@@ -35,9 +35,11 @@ class Konsultasi extends BaseController
 
     public function anak($idBalita)
     {
+        $role            = strtolower((string) session()->get('role'));
         $balitaModel     = new BalitaModel();
         $pengukuranModel = new PengukuranModel();
-        $balita          = $balitaModel->find((int) $idBalita);
+        $idBalita        = (int) $idBalita;
+        $balita          = $balitaModel->find($idBalita);
 
         if (! $balita) {
             return redirect()
@@ -45,8 +47,15 @@ class Konsultasi extends BaseController
                 ->with('error', 'Data balita tidak ditemukan');
         }
 
+        // IDOR protection: orangtua hanya bisa konsultasi soal balitanya sendiri
+        if ($role === 'orangtua' && (int) $balita['id_user'] !== (int) session()->get('id')) {
+            return redirect()
+                ->to('/balita')
+                ->with('error', 'Data balita tidak ditemukan');
+        }
+
         $pengukuran = $pengukuranModel
-            ->where('id_balita', (int) $idBalita)
+            ->where('id_balita', $idBalita)
             ->orderBy('tanggal_ukur', 'DESC')
             ->first();
 

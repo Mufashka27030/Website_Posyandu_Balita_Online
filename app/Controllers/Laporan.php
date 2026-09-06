@@ -67,15 +67,36 @@ class Laporan extends BaseController
 
     private function dataLaporan(): array
     {
-        $balitaModel = new BalitaModel();
+        $balitaModel     = new BalitaModel();
         $pengukuranModel = new PengukuranModel();
-        $dataBalita = [];
+        $dataBalita      = [];
 
-        foreach ($balitaModel->findAll() as $balita) {
-            $pengukuran = $pengukuranModel
-                ->where('id_balita', $balita['id_balita'])
+        $semuaBalita = $balitaModel->findAll();
+        $balitaIds   = array_column($semuaBalita, 'id_balita');
+
+        // Ambil SATU kali semua pengukuran untuk balita-balita ini, lalu simpan
+        // hanya yang terbaru per balita — menghindari query satu-per-satu di
+        // dalam foreach (N+1). Pola yang sama seperti yang sudah dipakai di
+        // Dashboard::getBalitaWithLatestPengukuran().
+        $latestPerBalita = [];
+
+        if (! empty($balitaIds)) {
+            $semuaPengukuran = $pengukuranModel
+                ->whereIn('id_balita', $balitaIds)
+                ->orderBy('id_balita', 'ASC')
                 ->orderBy('tanggal_ukur', 'DESC')
-                ->first();
+                ->findAll();
+
+            foreach ($semuaPengukuran as $p) {
+                $idBalita = $p['id_balita'];
+                if (! isset($latestPerBalita[$idBalita])) {
+                    $latestPerBalita[$idBalita] = $p;
+                }
+            }
+        }
+
+        foreach ($semuaBalita as $balita) {
+            $pengukuran = $latestPerBalita[$balita['id_balita']] ?? null;
 
             $dataBalita[] = [
                 'nama' => $balita['nama_balita'],

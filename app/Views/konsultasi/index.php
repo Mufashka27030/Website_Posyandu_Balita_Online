@@ -52,7 +52,7 @@
                                                 "Halo " . $ot['nama'] . ", saya dari Posyandu ingin berkomunikasi."
                                             );
                                             ?>
-                                            <a href__="https://wa.me/<?= $nomor; ?>?text=<?= $pesan; ?>"
+                                            <a href="https://wa.me/<?= $nomor; ?>?text=<?= $pesan; ?>"
                                                target="_blank"
                                                class="btn btn-success btn-sm">
                                                 <i class="fab fa-whatsapp"></i> Chat
@@ -122,7 +122,7 @@
                 <div class="card border-0 shadow-sm">
                     <div class="card-body text-center">
                         <h5 class="fw-bold mb-3">Mulai Konsultasi</h5>
-                        <a href__="<?= esc($link_wa, 'attr'); ?>" target="_blank"
+                        <a href="<?= esc($link_wa, 'attr'); ?>" target="_blank"
                            class="btn btn-success btn-lg px-5">
                             <i class="fab fa-whatsapp"></i> Chat WhatsApp
                         </a>

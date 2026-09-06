@@ -203,6 +203,12 @@ attribution:'OpenStreetMap'
 ).addTo(map);
 
 
+function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+}
+
 var dataBalita =
 
 <?= isset($balita)
@@ -246,9 +252,9 @@ radius:10
 
 .bindPopup(
 
-'<b>'+item.nama+'</b><br>'+
+'<b>'+escapeHtml(item.nama)+'</b><br>'+
 
-item.alamat+'<br><br>'+
+escapeHtml(item.alamat)+'<br><br>'+
 
 'Status: '+item.status
 

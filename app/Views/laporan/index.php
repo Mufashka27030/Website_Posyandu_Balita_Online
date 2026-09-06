@@ -8,10 +8,10 @@
         <p class="text-muted mb-0">Rekapitulasi data stunting balita</p>
     </div>
     <div class="d-flex gap-2">
-        <a href__="/laporan/pdf" target="_blank" class="btn btn-danger btn-sm">
+        <a href="/laporan/pdf" target="_blank" class="btn btn-danger btn-sm">
             <i class="fas fa-file-pdf"></i> Cetak PDF
         </a>
-        <a href__="/laporan/excel" class="btn btn-success btn-sm">
+        <a href="/laporan/excel" class="btn btn-success btn-sm">
             <i class="fas fa-file-excel"></i> Export Excel
         </a>
     </div>

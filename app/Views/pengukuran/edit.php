@@ -1,91 +1,73 @@
-<?= $this->include('layout/header'); ?>
-<?= $this->include('layout/navbar'); ?>
-<?= $this->include('layout/sidebar'); ?>
+<?= $this->extend('layout/main'); ?>
 
-<div class="container-fluid py-4">
+<?= $this->section('content'); ?>
 
-    <div class="card shadow border-0">
+<div class="row justify-content-center mt-4">
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom">
+                <h4 class="mb-0 fw-bold">
+                    <i class="bi bi-pencil-square text-warning me-2"></i>Edit Data Pengukuran
+                </h4>
+            </div>
+            <div class="card-body">
 
-        <div class="card-header bg-primary text-white">
+                <?php if (session()->getFlashdata('error')): ?>
+                    <div class="alert alert-danger"><?= session()->getFlashdata('error'); ?></div>
+                <?php endif; ?>
 
-            <h4 class="mb-0">
-                Edit Data Pengukuran
-            </h4>
+                <?php if (isset($pengukuran)): ?>
 
-        </div>
+                <form action="/pengukuran/update/<?= $pengukuran['id_pengukuran']; ?>" method="post">
+                    <?= csrf_field(); ?>
 
-        <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">Tanggal Pengukuran <span class="text-danger">*</span></label>
+                        <input type="date" name="tanggal_ukur" class="form-control"
+                               value="<?= esc($pengukuran['tanggal_ukur'], 'attr'); ?>" required>
+                    </div>
 
-            <?php if(isset($pengukuran)): ?>
+                    <div class="mb-3">
+                        <label class="form-label">Usia Saat Pengukuran (Bulan) <span class="text-danger">*</span></label>
+                        <input type="number" name="usia_bulan" class="form-control" min="0" max="60"
+                               value="<?= (int)$pengukuran['usia_bulan']; ?>" required>
+                    </div>
 
-            <form
-            action="/pengukuran/update/<?= $pengukuran['id_pengukuran']; ?>"
-            method="post">
+                    <div class="mb-3">
+                        <label class="form-label">Berat Badan (Kg) <span class="text-danger">*</span></label>
+                        <input type="number" step="0.01" name="berat_badan" class="form-control"
+                               value="<?= esc($pengukuran['berat_badan'], 'attr'); ?>" required>
+                    </div>
 
-                <div class="mb-3">
+                    <div class="mb-3">
+                        <label class="form-label">Tinggi Badan (Cm) <span class="text-danger">*</span></label>
+                        <input type="number" step="0.01" name="tinggi_badan" class="form-control"
+                               value="<?= esc($pengukuran['tinggi_badan'], 'attr'); ?>" required>
+                    </div>
 
-                    <label class="form-label">
-                        Berat Badan (Kg)
-                    </label>
+                    <div class="mb-3">
+                        <label class="form-label">Catatan</label>
+                        <textarea name="catatan" class="form-control" rows="3"
+                                  placeholder="Catatan pengukuran (opsional)"><?= esc($pengukuran['catatan'] ?? old('catatan', '')); ?></textarea>
+                    </div>
 
-                    <input
-                    type="number"
-                    step="0.1"
-                    name="berat_badan"
-                    class="form-control"
-                    value="<?= $pengukuran['berat_badan']; ?>"
-                    required>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-save"></i> Simpan Perubahan
+                        </button>
+                        <a href="/pengukuran/riwayat/<?= $pengukuran['id_balita']; ?>" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Kembali
+                        </a>
+                    </div>
+                </form>
 
-                </div>
-
-                <div class="mb-3">
-
-                    <label class="form-label">
-                        Tinggi Badan (Cm)
-                    </label>
-
-                    <input
-                    type="number"
-                    step="0.1"
-                    name="tinggi_badan"
-                    class="form-control"
-                    value="<?= $pengukuran['tinggi_badan']; ?>"
-                    required>
-
-                </div>
-
-                <button
-                type="submit"
-                class="btn btn-success">
-
-                    Simpan Perubahan
-
-                </button>
-
-                <a
-                href="/balita"
-                class="btn btn-secondary">
-
-                    Kembali
-
-                </a>
-
-            </form>
-
-            <?php else: ?>
-
-            <div class="alert alert-danger">
-
-                Data pengukuran tidak ditemukan
+                <?php else: ?>
+                    <div class="alert alert-danger">Data pengukuran tidak ditemukan</div>
+                <?php endif; ?>
 
             </div>
-
-            <?php endif; ?>
-
         </div>
-
     </div>
-
 </div>
 
-<?= $this->include('layout/footer'); ?>
+<?= $this->endSection(); ?>

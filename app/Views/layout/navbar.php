@@ -38,6 +38,20 @@
 
                 </li>
 
+                <li class="nav-item me-3">
+
+                    <a
+                        href="/faq"
+                        class="nav-link text-white">
+
+                        <i class="fas fa-question-circle"></i>
+
+                        FAQ
+
+                    </a>
+
+                </li>
+
                 <li class="nav-item">
 
                     <a

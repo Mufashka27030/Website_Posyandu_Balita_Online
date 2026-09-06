@@ -2,297 +2,280 @@
 
 <?= $this->section('content'); ?>
 
-
 <?php
-
 /** @var array $orangtua */
-
 ?>
 
-<!DOCTYPE html>
-<html>
-
-<head>
-
-    <title>Tambah Balita</title>
-
-    <meta name="viewport"
-        content="width=device-width, initial-scale=1">
-
-    <style>
-        body {
-            background: #f5f7fb;
-            font-family: Arial, sans-serif;
-            padding: 20px;
-        }
-
-        .card {
-
-            max-width: 700px;
-
-            margin: auto;
-
-            background: white;
-
-            padding: 30px;
-
-            border-radius: 15px;
-
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-
-        h2 {
-
-            margin-bottom: 20px;
-        }
-
-        .form-group {
-
-            margin-bottom: 15px;
-        }
-
-        label {
-
-            display: block;
-
-            margin-bottom: 5px;
-
-            font-weight: bold;
-        }
-
-        input,
-        select,
-        textarea {
-
-            width: 100%;
-
-            padding: 12px;
-
-            border: 1px solid #ddd;
-
-            border-radius: 10px;
-
-            box-sizing: border-box;
-        }
-
-        .button-group {
-
-            margin-top: 20px;
-
-            display: flex;
-
-            gap: 10px;
-
-            flex-wrap: wrap;
-        }
-
-        .btn {
-
-            text-decoration: none;
-
-            border: none;
-
-            padding: 12px 20px;
-
-            border-radius: 10px;
-
-            cursor: pointer;
-        }
-
-        .btn-primary {
-
-            background: #2563eb;
-
-            color: white;
-        }
-
-        .btn-secondary {
-
-            background: #e5e7eb;
-
-            color: black;
-        }
-    </style>
-
-</head>
-
-<script>
-    const selectUser =
-        document.getElementById('id_user');
-
-    const preview =
-        document.getElementById('nama_ibu_preview');
-
-    function updatePreview() {
-
-        const option =
-            selectUser.options[
-                selectUser.selectedIndex
-            ];
-
-        preview.value =
-            option.dataset.nama || '';
-
+<style>
+    .tambah-balita-card {
+        max-width: 700px;
+        margin: auto;
+        background: white;
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     }
 
-    selectUser.addEventListener(
-        'change',
-        updatePreview
-    );
+    .tambah-balita-card h2 {
+        margin-bottom: 20px;
+    }
 
-    updatePreview();
-</script>
+    .tambah-balita-card .form-group {
+        margin-bottom: 15px;
+    }
 
-<body>
+    .tambah-balita-card label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+    }
 
-    <div class="card">
+    .tambah-balita-card input,
+    .tambah-balita-card select,
+    .tambah-balita-card textarea {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        box-sizing: border-box;
+    }
 
-        <h2>
-            Tambah Data Balita
-        </h2>
+    .tambah-balita-card .button-group {
+        margin-top: 20px;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
 
-        <form action="/balita/simpan"
-            method="post">
+    .tambah-balita-card .btn {
+        text-decoration: none;
+        border: none;
+        padding: 12px 20px;
+        border-radius: 10px;
+        cursor: pointer;
+    }
 
-            <?= csrf_field(); ?>
+    .tambah-balita-card .btn-primary {
+        background: #2563eb;
+        color: white;
+    }
 
-            <?php if (session()->getFlashdata('error')): ?>
+    .tambah-balita-card .btn-secondary {
+        background: #e5e7eb;
+        color: black;
+    }
+</style>
 
-                <div style="background:#fee2e2;color:#991b1b;padding:12px;border-radius:10px;margin-bottom:15px;">
+<div class="tambah-balita-card">
 
-                    <?= session()->getFlashdata('error'); ?>
+    <h2>Tambah Data Balita</h2>
 
-                </div>
+    <form action="/balita/simpan" method="post">
 
+        <?= csrf_field(); ?>
+
+        <?php if (session()->getFlashdata('error')): ?>
+
+            <div style="background:#fee2e2;color:#991b1b;padding:12px;border-radius:10px;margin-bottom:15px;">
+
+                <?= session()->getFlashdata('error'); ?>
+
+            </div>
+
+        <?php endif; ?>
+
+        <div class="form-group">
+
+            <label>Nama Balita</label>
+
+            <input
+                type="text"
+                name="nama_balita"
+                value="<?= esc(old('nama_balita'), 'attr'); ?>"
+                required>
+
+        </div>
+
+        <div class="form-group">
+
+            <label>NIK Balita</label>
+
+            <input
+                type="text"
+                name="nik"
+                maxlength="20"
+                placeholder="Contoh: 3508121234567890"
+                value="<?= esc(old('nik'), 'attr'); ?>">
+
+        </div>
+
+        <div class="form-group">
+
+            <label>Orang Tua / Pemilik Akun</label>
+
+            <select id="id_user" name="id_user" required>
+
+                <option value="">
+                    -- Pilih Orang Tua --
+                </option>
+                <?php foreach ($orangtua as $user): ?>
+
+                    <option
+                        value="<?= $user['id_user']; ?>"
+                        data-nama="<?= esc($user['nama'], 'attr'); ?>">
+
+                        <?= esc($user['nama']); ?>
+
+                    </option>
+
+                <?php endforeach; ?>
+
+            </select>
+
+        </div>
+
+        <div class="form-group">
+
+            <label>Puskesmas</label>
+
+            <select name="id_puskesmas">
+
+                <option value="">
+                    -- Belum ditentukan --
+                </option>
+                <?php foreach (($puskesmas ?? []) as $p): ?>
+
+                    <option
+                        value="<?= (int) $p['id_puskesmas']; ?>"
+                        <?= (string) old('id_puskesmas') === (string) $p['id_puskesmas'] ? 'selected' : ''; ?>>
+
+                        <?= esc($p['nama_puskesmas']); ?>
+
+                    </option>
+
+                <?php endforeach; ?>
+
+            </select>
+
+            <?php if (empty($puskesmas)): ?>
+                <small style="color:#6b7280;">
+                    Belum ada data puskesmas. <a href="/puskesmas/tambah">Tambahkan dulu di sini.</a>
+                </small>
             <?php endif; ?>
 
-            <div class="form-group">
+        </div>
 
-                <label>Nama Balita</label>
+        <div class="form-group">
 
-                <input
-                    type="text"
-                    name="nama_balita"
-                    value="<?= esc(old('nama_balita'), 'attr'); ?>"
-                    required>
+            <label>Nama Ibu</label>
 
-            </div>
+            <input
+                type="text"
+                id="nama_ibu_preview"
+                name="nama_ibu"
+                value="<?= esc(old('nama_ibu'), 'attr'); ?>">
 
-            <div class="form-group">
+        </div>
 
-                <label>Orang Tua / Pemilik Akun</label>
+        <div class="form-group">
 
-                <select id="id_user" name="id_user" required>
+            <label>Jenis Kelamin</label>
 
-                    <option value="">
-                        -- Pilih Orang Tua --
-                    </option>
-                    <?php foreach ($orangtua as $user): ?>
+            <select name="jenis_kelamin">
 
-                        <option
-                            value="<?= $user['id_user']; ?>">
+                <option value="L" <?= old('jenis_kelamin') === 'L' ? 'selected' : ''; ?>>
+                    Laki-laki
+                </option>
 
-                            <?= esc($user['nama']); ?>
+                <option value="P" <?= old('jenis_kelamin') === 'P' ? 'selected' : ''; ?>>
+                    Perempuan
+                </option>
 
-                        </option>
+            </select>
 
-                    <?php endforeach; ?>
+        </div>
 
-                </select>
+        <div class="form-group">
 
-            </div>
+            <label>Tanggal Lahir</label>
 
-            <div class="form-group">
+            <input
+                type="date"
+                name="tanggal_lahir"
+                value="<?= esc(old('tanggal_lahir'), 'attr'); ?>"
+                required>
 
-                <label>Nama Ibu</label>
+        </div>
 
-                <input
-                    type="text"
-                    name="nama_ibu"
-                    value="<?= esc(old('nama_ibu'), 'attr'); ?>">
+        <div class="form-group">
 
-            </div>
+            <label>Alamat</label>
 
-            <div class="form-group">
+            <textarea
+                name="alamat"
+                rows="3"><?= esc(old('alamat')); ?></textarea>
 
-                <label>Jenis Kelamin</label>
+        </div>
 
-                <select name="jenis_kelamin">
+        <div class="form-group">
 
-                    <option value="L" <?= old('jenis_kelamin') === 'L' ? 'selected' : ''; ?>>
-                        Laki-laki
-                    </option>
+            <label>Latitude</label>
 
-                    <option value="P" <?= old('jenis_kelamin') === 'P' ? 'selected' : ''; ?>>
-                        Perempuan
-                    </option>
+            <input
+                type="text"
+                name="latitude"
+                value="<?= esc(old('latitude'), 'attr'); ?>">
 
-                </select>
+        </div>
 
-            </div>
+        <div class="form-group">
 
-            <div class="form-group">
+            <label>Longitude</label>
 
-                <label>Tanggal Lahir</label>
+            <input
+                type="text"
+                name="longitude"
+                value="<?= esc(old('longitude'), 'attr'); ?>">
 
-                <input
-                    type="date"
-                    name="tanggal_lahir"
-                    value="<?= esc(old('tanggal_lahir'), 'attr'); ?>"
-                    required>
+        </div>
 
-            </div>
+        <div class="button-group">
 
-            <div class="form-group">
+            <button
+                type="submit"
+                class="btn btn-primary">
 
-                <label>Alamat</label>
+                Simpan
 
-                <textarea
-                    name="alamat"
-                    rows="3"><?= esc(old('alamat')); ?></textarea>
+            </button>
 
-            </div>
+            <a href="/balita" class="btn btn-secondary">
+                Batal
+            </a>
 
-            <div class="form-group">
+        </div>
 
-                <label>Latitude</label>
+    </form>
 
-                <input
-                    type="text"
-                    name="latitude"
-                    value="<?= esc(old('latitude'), 'attr'); ?>">
+</div>
 
-            </div>
+<script>
+    (function () {
+        const selectUser = document.getElementById('id_user');
+        const preview = document.getElementById('nama_ibu_preview');
 
-            <div class="form-group">
+        if (!selectUser || !preview) {
+            return;
+        }
 
-                <label>Longitude</label>
+        function updatePreview() {
+            const option = selectUser.options[selectUser.selectedIndex];
+            preview.value = (option && option.dataset.nama) || '';
+        }
 
-                <input
-                    type="text"
-                    name="longitude"
-                    value="<?= esc(old('longitude'), 'attr'); ?>">
-
-            </div>
-
-            <div class="button-group">
-
-                <button
-                    type="submit"
-                    class="btn btn-primary">
-
-                    Simpan
-
-                </button>
-
-            </div>
-
-        </form>
-
-    </div>
-
-</body>
-
-</html>
+        selectUser.addEventListener('change', updatePreview);
+        updatePreview();
+    })();
+</script>
 
 <?= $this->endSection(); ?>
