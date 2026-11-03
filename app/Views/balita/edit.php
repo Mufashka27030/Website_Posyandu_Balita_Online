@@ -19,10 +19,6 @@ Edit Data Balita
 
 <?php if(isset($balita)): ?>
 
-<!-- <form
-action="/balita/update/<?= $balita['id_balita']; ?>"
-method="post"> -->
-
 <?= csrf_field(); ?>
 
 <form action="/balita/update/<?= $balita['id_balita']; ?>" method="post">
@@ -60,9 +56,9 @@ required>
 
 </div>
 
-<div class="form-group">
+<div class="mb-3">
     <label>NIK Balita</label>
-    <input type="text" name="nik" maxlength="20"
+    <input type="text" name="nik" maxlength="20" class="form-control"
            value="<?= esc(old('nik', $balita['nik'] ?? ''), 'attr'); ?>">
 </div>
 
@@ -200,5 +196,4 @@ Kembali
 </div>
 
 </div>
-
 <?= $this->endSection(); ?>

@@ -196,7 +196,11 @@ L.tileLayer(
 
 {
 
-attribution:'OpenStreetMap'
+attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+
+referrerPolicy: 'no-referrer-when-downgrade',
+
+maxZoom: 19
 
 }
 

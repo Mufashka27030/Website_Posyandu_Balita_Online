@@ -1,0 +1,59 @@
+#--------------------------------------------------------------------
+# Template konfigurasi environment untuk Website Posyandu Balita Online
+#
+# Cara pakai:
+#   1. Salin file ini menjadi .env (tanpa contoh, file .env sudah ada
+#      di .gitignore sehingga tidak ikut terkirim ke repository).
+#   2. Isi nilai yang benar untuk server tempat aplikasi dipasang.
+#   3. JANGAN pernah mengirim/meng-upload file .env — isinya berisi
+#      kredensial database dan mode environment aplikasi.
+#--------------------------------------------------------------------
+
+#--------------------------------------------------------------------
+# ENVIRONMENT
+#
+# production  -> pesan error detail disembunyikan dari pengunjung
+# development -> halaman error menampilkan stack trace (HANYA saat
+#                 mengerjakan skripsi di laptop sendiri)
+#--------------------------------------------------------------------
+
+CI_ENVIRONMENT = production
+
+#--------------------------------------------------------------------
+# APP
+#
+# baseURL WAJIB diubah sesuai tempat aplikasi dipasang, kalau tidak
+# seluruh link, aset, dan redirect akan salah:
+#   XAMPP di folder htdocs/Website_Posyandu_Balita_Online/public
+#       app.baseURL = "http://localhost/Website_Posyandu_Balita_Online/public/"
+#   XAMPP di folder htdocs/Website_Posyandu_Balita_Online (tanpa public)
+#       app.baseURL = "http://localhost/Website_Posyandu_Balita_Online/"
+#   domain asli
+#       app.baseURL = "https://namadomainanda.com/"
+#--------------------------------------------------------------------
+
+app.baseURL = 'http://localhost:8080/'
+
+# Matikan debug SQL di server publik: query yang gagal pernah tercatat
+# lengkap beserta hash password ke writable/logs.
+database.default.DBDebug = false
+
+#--------------------------------------------------------------------
+# DATABASE
+#--------------------------------------------------------------------
+
+database.default.hostname = localhost
+database.default.database = dbpsoyandu_balita_online
+database.default.username =
+database.default.password =
+database.default.DBDriver = MySQLi
+database.default.port = 3306
+
+#--------------------------------------------------------------------
+# LOGGER
+#
+# threshold 2 = hanya error kritis yang ditulis ke writable/logs,
+# supaya data pribadi balita tidak menumpuk di file log.
+#--------------------------------------------------------------------
+
+# logger.threshold = 2

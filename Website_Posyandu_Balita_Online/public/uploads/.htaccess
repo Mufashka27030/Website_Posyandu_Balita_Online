@@ -1,0 +1,12 @@
+# Folder upload hanya boleh menyajikan berkas gambar.
+# Tanpa aturan ini, satu berkas berekstensi .php yang berhasil masuk bisa
+# dieksekusi Apache dan berubah menjadi webshell di server.
+Options -Indexes -ExecCGI
+
+<FilesMatch "\.(php|phtml|php[3-8]|phar|pl|py|cgi|sh|htaccess)$">
+    Require all denied
+</FilesMatch>
+
+<IfModule mod_php.c>
+    php_flag engine off
+</IfModule>

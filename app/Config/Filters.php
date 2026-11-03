@@ -108,4 +108,20 @@ class Filters extends BaseFilters
      * @var array<string, array<string, list<string>>>
      */
     public array $filters = [];
+
+    public function __construct()
+    {
+        parent::__construct();
+
+        // Matikan filter CSRF khusus saat menjalankan automated test lewat
+        // vendor/bin/phpunit, supaya feature test tidak perlu membuat token
+        // dan cookie CSRF secara manual tiap kali menguji route POST.
+        // TIDAK memengaruhi production maupun development sama sekali —
+        // ENVIRONMENT cuma bernilai 'testing' saat dijalankan PHPUnit.
+        if (ENVIRONMENT === 'testing') {
+            $this->globals['before'] = array_values(
+                array_diff($this->globals['before'], ['csrf'])
+            );
+        }
+    }
 }
